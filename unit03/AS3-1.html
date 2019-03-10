@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="第 0 組" />
+<meta name="author" content="第 9 組" />
 
 
 <title>AS3-1: 數位偵探</title>
@@ -118,6 +118,9 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
+.html-widget {
+  margin-bottom: 20px;
+}
 button.code-folding-btn:focus {
   outline: none;
 }
@@ -146,8 +149,8 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">AS3-1: 數位偵探</h1>
-<h4 class="author"><em>第 0 組</em></h4>
-<h4 class="date"><em>2019-03-05 21:37:49</em></h4>
+<h4 class="author"><em>第 9 組</em></h4>
+<h4 class="date"><em>2019-03-10 17:39:30</em></h4>
 
 </div>
 
@@ -173,20 +176,86 @@ $(document).ready(function () {
 <div id="section-1-loading-the-data" class="section level3">
 <h3>Section-1 Loading the Data</h3>
 <p>【1.1】How many rows of data (observations) are in this dataset?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(readr)
+mvtWeek1 &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/mvtWeek1.csv&quot;</span>)</code></pre></div>
+<pre><code>Parsed with column specification:
+cols(
+  ID = col_integer(),
+  Date = col_character(),
+  LocationDescription = col_character(),
+  Arrest = col_logical(),
+  Domestic = col_logical(),
+  Beat = col_integer(),
+  District = col_integer(),
+  CommunityArea = col_integer(),
+  Year = col_integer(),
+  Latitude = col_double(),
+  Longitude = col_double()
+)</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">nrow</span>(mvtWeek1)  ### 191641</code></pre></div>
+<pre><code>[1] 191641</code></pre>
 <p>檢查各欄位的資料格式</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(mvtWeek1) </code></pre></div>
+<pre><code>Classes 'tbl_df', 'tbl' and 'data.frame':   191641 obs. of  11 variables:
+ $ ID                 : int  8951354 8951141 8952745 8952223 8951608 8950793 8950760 8951611 8951802 8950706 ...
+ $ Date               : chr  &quot;12/31/12 23:15&quot; &quot;12/31/12 22:00&quot; &quot;12/31/12 22:00&quot; &quot;12/31/12 22:00&quot; ...
+ $ LocationDescription: chr  &quot;STREET&quot; &quot;STREET&quot; &quot;RESIDENTIAL YARD (FRONT/BACK)&quot; &quot;STREET&quot; ...
+ $ Arrest             : logi  FALSE FALSE FALSE FALSE FALSE TRUE ...
+ $ Domestic           : logi  FALSE FALSE FALSE FALSE FALSE FALSE ...
+ $ Beat               : int  623 1213 1622 724 211 2521 423 231 1021 1215 ...
+ $ District           : int  6 12 16 7 2 25 4 2 10 12 ...
+ $ CommunityArea      : int  69 24 11 67 35 19 48 40 29 24 ...
+ $ Year               : int  2012 2012 2012 2012 2012 2012 2012 2012 2012 2012 ...
+ $ Latitude           : num  41.8 41.9 42 41.8 41.8 ...
+ $ Longitude          : num  -87.6 -87.7 -87.8 -87.7 -87.6 ...
+ - attr(*, &quot;spec&quot;)=List of 2
+  ..$ cols   :List of 11
+  .. ..$ ID                 : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_integer&quot; &quot;collector&quot;
+  .. ..$ Date               : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_character&quot; &quot;collector&quot;
+  .. ..$ LocationDescription: list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_character&quot; &quot;collector&quot;
+  .. ..$ Arrest             : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_logical&quot; &quot;collector&quot;
+  .. ..$ Domestic           : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_logical&quot; &quot;collector&quot;
+  .. ..$ Beat               : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_integer&quot; &quot;collector&quot;
+  .. ..$ District           : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_integer&quot; &quot;collector&quot;
+  .. ..$ CommunityArea      : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_integer&quot; &quot;collector&quot;
+  .. ..$ Year               : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_integer&quot; &quot;collector&quot;
+  .. ..$ Latitude           : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_double&quot; &quot;collector&quot;
+  .. ..$ Longitude          : list()
+  .. .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_double&quot; &quot;collector&quot;
+  ..$ default: list()
+  .. ..- attr(*, &quot;class&quot;)= chr  &quot;collector_guess&quot; &quot;collector&quot;
+  ..- attr(*, &quot;class&quot;)= chr &quot;col_spec&quot;</code></pre>
 <p>類別(Factor) versus 字串(Character)</p>
 <p>【1.2】How many variables are in this dataset?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ncol</span>(mvtWeek1)  ### 11</code></pre></div>
+<pre><code>[1] 11</code></pre>
 <p>【1.3】Using the “max” function, what is the maximum value of the variable “ID”?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">max</span>(mvtWeek1<span class="op">$</span>ID)  ### 9181151</code></pre></div>
+<pre><code>[1] 9181151</code></pre>
 <p>【1.4】 What is the minimum value of the variable “Beat”?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">min</span>(mvtWeek1<span class="op">$</span>Beat) ### 111</code></pre></div>
+<pre><code>[1] 111</code></pre>
 <p>【1.5】 How many observations have value TRUE in the Arrest variable (this is the number of crimes for which an arrest was made)?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sum</span>(mvtWeek1<span class="op">$</span>Arrest) ### 15536</code></pre></div>
+<pre><code>[1] 15536</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(mvtWeek1<span class="op">$</span>Arrest) ### 15536</code></pre></div>
+<pre><code>   Mode   FALSE    TRUE 
+logical  176105   15536 </code></pre>
 <p>【1.6】 How many observations have a LocationDescription value of ALLEY?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(mvtWeek1<span class="op">$</span>LocationDescription <span class="op">==</span><span class="st"> &quot;ALLEY&quot;</span>) ### 2308</code></pre></div>
+<pre><code>
+ FALSE   TRUE 
+189333   2308 </code></pre>
 <p><br><br></p>
 <hr />
 </div>
@@ -199,14 +268,18 @@ $(document).ready(function () {
 <li>Hour:Minute Month/Day/Year</li>
 <li>Hour:Minute Day/Month/Year</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mvtWeek1<span class="op">$</span>Date[<span class="dv">1</span>] ### Month/Day/Year Hour:Minute</code></pre></div>
+<pre><code>[1] &quot;12/31/12 23:15&quot;</code></pre>
 <p>【2.2】 What is the month and year of the median date in our dataset?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+mvtWeek1<span class="op">$</span>Date &lt;-<span class="st"> </span><span class="kw">as.Date</span>(mvtWeek1<span class="op">$</span>Date, <span class="st">&quot;%m/%d/%y %H:%M&quot;</span>)
+<span class="kw">as.Date</span>(mvtWeek1<span class="op">$</span>Date, <span class="st">&quot;%m/%d/%y %H:%M&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>median ### &quot;2006-05-21&quot;</code></pre></div>
+<pre><code>[1] &quot;2006-05-21&quot;</code></pre>
 <p>【2.3】 In which month did the fewest motor vehicle thefts occur?</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">months</span>(mvtWeek1<span class="op">$</span>Date) <span class="op">%&gt;%</span><span class="st"> </span>table <span class="op">%&gt;%</span><span class="st"> </span>sort ### 2月</code></pre></div>
+<pre><code>.
+  2月   4月   3月   6月   5月   1月   9月  11月  12月   8月   7月  10月 
+13511 15280 15758 16002 16035 16047 16060 16063 16426 16572 16801 17086 </code></pre>
 <p>【2.4】 On which weekday did the most motor vehicle thefts occur?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#</span></code></pre></div>
 <p>【2.5】 Which month has the largest number of motor vehicle thefts for which an arrest was made?</p>
