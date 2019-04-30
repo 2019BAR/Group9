@@ -1,0 +1,399 @@
+---
+title: "期中競賽"
+author: "第 9 組"
+date: "`r Sys.time()`"
+output:
+  html_document:
+    highlight: pygments
+    theme: flatly
+    css: style.css
+---
+
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(d3heatmap)
+library(ggplot2)
+
+C <- read_csv("Group9/brazilian-ecommerce/olist_customers_dataset.csv")
+Lo <- read_csv("Group9/brazilian-ecommerce/olist_geolocation_dataset.csv")
+It <- read_csv("Group9/brazilian-ecommerce/olist_order_items_dataset.csv")
+pay <- read_csv("Group9/brazilian-ecommerce/olist_order_payments_dataset.csv")
+re <- read_csv("Group9/brazilian-ecommerce/olist_order_reviews_dataset.csv")
+order <- read_csv("Group9/brazilian-ecommerce/olist_orders_dataset.csv")
+prod <- read_csv("Group9/brazilian-ecommerce/olist_products_dataset.csv")
+sell <- read_csv("Group9/brazilian-ecommerce/olist_sellers_dataset.csv")
+categ <- read_csv("Group9/brazilian-ecommerce/product_category_name_translation.csv")
+
+```
+
+
+```{r}
+unique(order$order_id) %>% length()    ### 99441 different order
+unique(order$customer_id) %>% length()  ### 99441 customer ID
+duplicated(order$customer_id) %>% table()  ### false 99441
+order$order_id %in% re$order_id %>% table() ### TRUE
+
+###
+
+re$review_id %>% duplicated() %>% table() ### TRUE 827, FALSE 99173
+re$order_id %>% duplicated() %>% table() ### TRUE 559, FALSE 99441
+unique(re$order_id) %>% length() ### 99441
+setdiff(unique(re$order_id),unique(order$order_id)) ### character(0)
+duplicated(C[,c(1,2)]) %>% table()
+
+###
+
+order$customer_id %>% unique() %>% length() ### 99411 
+C$customer_unique_id %>% unique() %>% length() ### 96096
+C$customer_unique_id %>% table %>% table()
+
+#     1     2     3     4     5     6     7     9    17 
+# 93099  2745   203    30     8     6     3     1     1 
+
+C[,c(4, 5)] <- lapply(C[,c(4, 5)], factor) 
+summary(C)
+C$customer_city %>% table() %>% sort %>% tail(10)
+
+# sao bernardo do campo             guarulhos              salvador          porto alegre              campinas 
+#                  938                  1189                  1245                  1379                  1444 
+# curitiba              brasilia        belo horizonte        rio de janeiro             sao paulo 
+#     1521                  2131                  2773                  6882                 15540 
+
+### 
+
+setdiff(unique(pay$order_id),unique(order$order_id)) ### character(0)
+setdiff(unique(order$order_id),unique(pay$order_id)) ### "bfbd0f9bdef84302105ad712db648a6c"
+
+pay$payment_type <- as.factor(pay$payment_type)
+unique(pay$order_id) %>% length() ### 99440
+
+pay$order_id %>% table() %>% table() 
+pay$payment_sequential %>% table() %>% sum() ### 103886
+#     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    19    21    22    26    29 
+# 96479  2382   301   108    52    36    28    11     9     5     8     8     3     2     2     2     1     1     1     1 
+
+pay[pay$payment_sequential == 2,]$order_id %in% pay[pay$payment_sequential == 1,]$order_id %>% table()
+
+# FALSE  TRUE 
+#    80  2959 
+
+summary(pay)
+
+# order_id         payment_sequential      payment_type   payment_installments   payment_value  
+# Length:103886      Min.   : 1.00      boleto     :19784   Min.   : 0.00        Min.   :    0  
+# Class :character   1st Qu.: 1.00      credit_card:76795   1st Qu.: 1.00        1st Qu.:   57  
+# Mode  :character   Median : 1.00      debit_card : 1529   Median : 1.00        Median :  100  
+#                    Mean   : 1.09      not_defined:    3   Mean   : 2.85        Mean   :  154  
+#                    3rd Qu.: 1.00      voucher    : 5775   3rd Qu.: 4.00        3rd Qu.:  172  
+#                    Max.   :29.00                          Max.   :24.00        Max.   :13664  
+# 
+
+### It
+
+It$order_id %>% unique() %>% length() ### 98666 
+It$order_id %in% order$order_id %>% table() ### TRUE
+
+order$order_id %in% It$order_id %>% table() ### TRUE 98666 , FALSE 775
+
+It$order_id %>% table() %>% table() 
+
+#     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15    20    21 
+# 88863  7516  1322   505   204   198    22     8     3     8     4     5     1     2     2     2     1 
+
+It[It$order_item_id == 2,]$order_id %in% It[It$order_item_id == 1,]$order_id %>% table() ### TRUE
+
+# TRUE 
+# 9803 
+
+It$product_id %>% unique() %>% length() ### 32951
+It$seller_id %>% unique() %>% length() ### 3095
+
+### 
+
+prod$product_id %>% unique() %>% length() ### 32951
+setdiff(unique(It$product_id), unique(prod$product_id)) ### character(0)
+prod$product_category_name %>% unique() %>% length() ### 74
+
+###
+categ$product_category_name %>% unique() %>% length() ### 71
+setdiff(unique(prod$product_category_name), unique(categ$product_category_name))
+### NA , "pc_gamer" , "portateis_cozinha_e_preparadores_de_alimentos"
+
+
+###
+
+
+Z = It %>% group_by(seller_id) %>% summarise(
+  ItemsSold = n(),
+  Rev = sum(price),
+  noProd = n_distinct(product_id),
+  avgPrice = mean(price),
+  maxPrice = max(price),
+  minPrice = min(price),
+  avgFreight = mean(freight_value),
+  avgRevProd = Rev/noProd,
+  avgItemsProd = ItemsSold/noProd
+)
+summary(Z)
+
+
+###
+
+
+X = unique(It[,c(1,4)]) %>% left_join(re[,2:3]) %>% 
+  group_by(seller_id) %>% summarise(
+    noReview = n(),
+    avgScore = mean(review_score),
+    minScore = min(review_score),
+    maxScore = max(review_score)) 
+
+###
+
+Z = Z %>% left_join(X) %>% left_join(sell)
+
+```
+
+
+```{r}
+pacman::p_load(dplyr, FactoMineR, factoextra)
+```
+
+```{r}
+ZZ <- Z[,c(1,2,3,4,5,8,9,10,11,12,15,16,17)]
+```
+
+
+
+```{r}
+
+library(readr)
+library(dplyr)
+library(d3heatmap)
+library(ggplot2)
+library(caTools)
+## library(chorddiag)
+set.seed(1234)
+ZZ$grp = kmeans(scale(ZZ[,c(3,5,6,9,10)]),5)$cluster %>% factor
+ZZ$grp %>% table()
+
+
+```
+
+```{r}
+# Z$group = factor(cutree(hc, k=4))
+# 
+# fviz_dend(
+#   hc, k=8, show_labels=F, rect=T, rect_fill=T,
+#   labels_track_height=0,
+#   palette="ucscgb", rect_border="ucscgb")
+```
+
+
+```{r}
+pacman::p_load(dplyr, FactoMineR, factoextra)
+pca = PCA(ZZ[,c(3,5,6,9,10)])
+
+```
+
+```{r}
+fviz_pca_ind(pca)
+```
+
+
+
+
+```{r}
+grp <- ZZ$grp
+
+fviz_pca_biplot(
+  pca, repel=T, col.var="black", 
+  col.ind=grp, alpha.ind=0.6, pointshape=16)
+```
+
+
+
+```{r}
+# grp <- ZZ$grp
+# 
+# fviz_pca_biplot(
+#   pca, repel=T, col.var="black", 
+#   col.ind=grp, alpha.ind=0.6, pointshape=16, 
+#   addEllipses = TRUE, ellipse.level = 0.6, mean.point = FALSE)
+
+```
+
+
+```{r}
+group_by(ZZ, grp) %>% summarise(
+  REV=mean(Rev), 
+  avgPrice=mean(avgPrice), 
+  avgFreight=mean(avgFreight),
+  noReview=mean(noReview),
+  avgScore=mean(avgScore),
+  size=n() )
+```
+
+```{r}
+### 價格高的顧客願意等？？？
+```
+
+```{r}
+ZZZ<- ZZ[,c(3,5,6,9,10)]
+colMeans(ZZZ)
+ZA<- scale(ZZZ) %>% data.frame
+
+par(cex=0.8)
+split(ZA, grp) %>% sapply(colMeans) %>% barplot(beside=T,col=rainbow(5))
+legend('topright',legend=colnames(ZZZ),fill=rainbow(5))
+```
+
+
+
+
+```{r}
+load("~/Downloads/II.RData")
+```
+
+```{r}
+II2 <- II %>% filter(grp== 1|grp == 4| grp== 2)
+II2$grp <- II2$grp %>% as.numeric() %>% as.factor()
+table(II2$grp, II2$category) %>% as.data.frame.matrix %>% 
+  d3heatmap(F,F,col=cm.colors(13)[3:13])
+```
+
+
+```{r}
+
+table(II$category)
+table(II$grp, II$category) %>% as.data.frame.matrix %>% 
+  d3heatmap(F,F,col=cm.colors(13)[3:13])
+
+```
+
+```{r}
+## II %>% group_by(grp) 
+II4 <- II %>% filter(grp == 3)
+
+II4$category %>% table %>% sort(decreasing = TRUE) 
+
+# auto          garden_tools         health_beauty        sports_leisure       furniture_decor 
+#   13                    12                    10                     8                     7 
+# baby computers_accessories     home_appliances_2              pet_shop            cool_stuff 
+#                     6                     6                     6                     6                     5 
+
+```
+
+
+
+
+```{r}
+R <- re
+R2 <- R[,c(2, 4, 5)] 
+R2 <- left_join(R2, I[,c(1,4)])
+R2 <- left_join(R2[,c(4,1,2,3)], ZZ[,c(1,14)])
+
+```
+
+
+```{r}
+R21 <- R2 %>% filter(grp == 1)
+
+```
+
+
+```{r}
+library(rvest)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+
+docs <- Corpus(VectorSource(R21$review_comment_message))
+                                         # 將內容以語料庫形式儲存
+
+```
+
+```{r}
+
+docs <- tm_map(docs, content_transformer(tolower)) 
+docs <- tm_map(docs, removeNumbers)     #移除數字
+docs <- tm_map(docs, removeWords,stopwords("portuguese")) # 移除常見的轉折詞彙
+docs <- tm_map(docs, removePunctuation) #移除標點符號
+docs <- tm_map(docs, stripWhitespace)  # 移除額外的空白
+
+```
+
+
+```{r}
+
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d<- data.frame(word=names(v), freq=v)
+head(d,50)
+
+```
+
+```{r}
+wordcloud(words=d$word,freq=d$freq,min.freq=2,
+                     max.words=150,random.order=FALSE,rot.per=0.35,
+                     colors=brewer.pal(35,"Dark2"))
+
+```
+
+
+```{r}
+Lo$geolocation_lat <- round(Lo$geolocation_lat,3)
+Lo$geolocation_lng <- round(Lo$geolocation_lng,3)
+```
+
+
+```{r}
+unique(sell$seller_zip_code_prefix) %>% length() ### 2246
+names(Lo)[1] <- "seller_zip_code_prefix"
+sell$seller_zip_code_prefix %>% unique() %>% length() 
+sell_lo <- left_join(sell, Lo, by = "seller_zip_code_prefix")
+
+```
+
+```{r}
+sell_lo2 <- sell_lo %>%  group_by(seller_id, seller_zip_code_prefix,  geolocation_state) %>% summarise(lat = mean(geolocation_lat), lng = mean(geolocation_lng))
+sell_lo2 <- sell_lo2[!duplicated(sell_lo2$seller_id),]
+sell_lo2 <- left_join(sell_lo2, ZZ[,c(1, 5, 10, 14)])
+
+table(sell_lo2$grp)
+```
+
+
+```{r}
+library(lubridate)
+library(Imap)
+library(maps)
+Brazil <- map_data("world")%>%filter(region=="Brazil")
+```
+
+```{r}
+ggplot() +
+  geom_polygon(data = Brazil, aes(x= long, y= lat, group= group), fill="black")+
+  geom_point(data= sell_lo2 , aes(x= lng, y= lat, color= grp), size = 2, alpha = 0.2)
+
+```
+
+```{r}
+sell_lo22 <- sell_lo2 %>% filter(grp== 5)
+ggplot() +
+  geom_polygon(data = Brazil, aes(x= long, y= lat, group= group), fill="black") + geom_point(data= sell_lo22,aes(x= lng, y= lat, color= grp), size = 2, alpha = 0.2)
+
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
