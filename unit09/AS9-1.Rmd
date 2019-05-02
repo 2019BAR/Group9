@@ -1,0 +1,171 @@
+---
+title: "航空公司的市場區隔"
+author: "第 9 組"
+date: "`r Sys.time()`"
+output: 
+  html_document:
+    highlight: pygments
+    theme: flatly
+    css: style.css
+---
+
+```{r results='hide', message=FALSE, warning=FALSE, echo=F}
+# 這些程式碼設定網頁的格式，並安裝、載入一些基本的套件，請大家不要去改動<br>
+rm(list=ls(all=T))
+knitr::opts_chunk$set(comment = NA)
+knitr::opts_knit$set(global.par = TRUE)
+par(cex=0.8)
+options(scipen=20, digits=5, width=80)
+if(!require(pacman)) install.packages("pacman")
+```
+<br>
+
+<p class="wwl">
+<span style="font-size:24px">`r "\U1F4A1"` 學習重點：</span><br>
+&emsp; ■ 集群分析的基本觀念<br>
+&emsp; ■ 距離矩陣：Distance Matrix<br>
+&emsp; ■ 層級式集群分析：Hierarchical Cluster Analysis<br>
+&emsp; ■ 樹狀圖(Dendrogram)的判讀<br>
+&emsp; ■ 依據樹狀圖決定要分多少群<br>
+&emsp; ■ 以群組平均值檢視各族群的屬性<br>
+</p class="wwl">
+
+<hr>
+
+```{r results='hide', message=FALSE, warning=FALSE}
+pacman::p_load(dplyr, ggplot2)
+```
+<br>
+
+### 【A】航空公司顧客資料集
+
+```{r}
+A = read.csv('data/AirlinesCluster.csv')
+summary(A)
+```
+
++ Balance: 可用里程數
++ QualMiles: 可用高等里程數
++ BonusMiles: 過去12個月非飛行里程數
++ BonusTrans: 過去12個月非飛行交易次數
++ FlightMiles: 過去12個月飛行里程數
++ FlightTrans: 過去12個月飛行交易次數
++ DaysSinceEnroll: 會員年資 (天)
+
+
+<br><br>
+
+### 【B】資料常態化
+
+<span style="font-size:24px">`r "\U1F5FF"`</span>
+為甚麼要做資料常態化？<br>
+```{r}
+colMeans(A) %>% sort
+```
+
+```{r}
+AN = scale(A) %>% data.frame
+```
+
+```{r}
+sapply(AN, mean)
+```
+
+```{r}
+sapply(AN, sd)
+```
+
+<br><br>
+
+### 【C】層級式集群分析 Hirarchical Clustering  
+
+1.距離矩陣
+```{r}
+d = dist(AN, method="euclidean")
+```
+
+2.層級式集群分析
+```{r}
+hc = hclust(d, method='ward.D')
+```
+
+3.畫出樹狀圖
+```{r}
+plot(hc)
+```
+<br>
+<span style="font-size:24px">`r "\U1F5FF"`</span>
+如何從樹狀圖決定群數？<br>
+
+4.分割群組 
+```{r}
+kg = cutree(hc, k=5)
+table(kg)
+```
+
+<br><br>
+
+### 【D】觀察群組特性
+
+```{r}
+sapply(split(A,kg), colMeans) %>% round(2) 
+```
+
+```{r}
+par(cex=0.8)
+split(AN,kg) %>% sapply(colMeans) %>% barplot(beside=T,col=rainbow(7))
+legend('topright',legend=colnames(A),fill=rainbow(7))
+```
+
+<br><br>
+
+<p class="qiz">
+<span style="font-size:24px">`r "\U1F5FF"` 討論問題：</span><br>
+&emsp; ■ 請你們為這五個族群各起一個名稱<br>
+```{r}
+# 請你們為這五個族群各起一個名稱
+# 1.沉睡客群:近期很少搭乘飛機的顧客。
+# 2.主力客群: 對於航空服務很常搭飛機到處飛的人。
+# 3.潛在客群:不常搭飛機但常使用相關聯盟內的資源的顧客，未來可能可以推廣搭乘本航空。
+# 4.新會員:目前只使用過相關聯盟服務。
+# 5.非目標客群: 新會員，尚未使用過聯盟內任何相關服務。
+
+```
+
+
+&emsp; ■ 請你們為這五個族群各設計一個行銷策略<br>
+```{r}
+# 行銷策略
+# 沉睡客群:可推行老會員優惠來吸引他們搭乘，讓他們有動機。
+# 主力客群:對於常常有飛行需求的顧客，可以提供他們凡累計搭幾次的飛行可兌換相對的免費    
+#          搭乘體驗，來維持他們持續搭乘本航空的意願。
+# 潛在客群:和其他聯盟內服務進行合作，在他們使用聯盟其他服務時，可得到搭乘航空的相關優惠來吸引他們搭乘。
+# 新會員: 給新會員推廣第一次搭乘本航空在機上會有特別服務，讓他們對於公司更加了解，加深對品牌印象。
+# 非目標客群: 因為該客群沒有在本航空公司搭乘過也沒有在聯盟接受過任何其他服務，所以可知他們非我們航空公司的客群。
+
+```
+
+&emsp; ■ 統計上最好的分群也是實務上最好的分群嗎<br>
+```{r}
+# 不是，基本上要透過多次的嘗試，才能看出來，不然有時分群出來的結果並不容易理解且可能和原本預期的有落差。
+
+```
+
+&emsp; ■ 除了考慮群間和群間距離之外，實務上的分群通常還需要考慮那些因數？<br>
+```{r}
+# 群和群間的距離，是統計就模型區分出來的，但實務上的分群很多時候考量的不只是數字上的差別，以航空公司例子來說，假如航空公司今天是要以註冊時間長短來行銷，那麼此時的分群有會不同，因此模型提供我們一個客觀的事實後，管理者分群時要配合公司的需求，或是成本和經濟效益上考量，做出來的決策或許有時候和統計數字上會有所不同。
+
+```
+
+</p class="qiz">
+
+<br><br><br><hr>
+
+
+
+
+
+
+？
+
+
